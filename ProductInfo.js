@@ -1,12 +1,12 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
-import { Image, Text, View, FlatList, TouchableOpacity, StyleSheet, TextInput } from "react-native";
+import { useState } from "react";
+import { Image, Text, View, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function MainMenu({ navigation }) {
+export default function ProductInfo({ route }) {
 
-    const [gadgets, setGadgets] = useState([]);
-    const [gadgetSearchName, setGadgetSearchName] = useState('');
+    const { productId } = route.params;
+    const [productInfo, setProductInfo] = useState([]);
 
     const getToken = async () => {
         try {
@@ -18,24 +18,24 @@ export default function MainMenu({ navigation }) {
         }
     };
 
-    const SelectGadgets = () => {
+    const SelectProductInfo = () => {
         getToken().then((token) => {
             if (token) {
                 axios({
                     method: 'get',
-                    url: 'http://bibizan12-001-site1.ctempurl.com/api/Product/Select',
+                    url: `http://bibizan12-001-site1.ctempurl.com/api/Product/FindByProductId?productId=${productId}`,
                     headers: {
                         'Authorization': 'Bearer ' + token,
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     },
                 }).then((response) => {
-                    setGadgets(response.data);
+                    setProductInfo(response.data);
                 }).catch((error) => {
-                    console.error("Error fetching gadgets:", error);
-                });
+                    alert("You have a problem!")
+                })
             }
-        });
+        })
     };
 
     const AddOrder = (item) => {
@@ -66,50 +66,28 @@ export default function MainMenu({ navigation }) {
         })
     };
 
-    const TouchProdInfo = (productId) => {
-        navigation.navigate("Product Information", { productId });
-    };
-
-    const TouchSearchListInfo = () => {
-        navigation.navigate("Search Product", { gadgetSearchName });
-    };
-
-    useEffect(() => {
-        SelectGadgets();
-    }, [])
+    useState(() => {
+        SelectProductInfo();
+    }, [productId]);
 
     return (
-        <View style={styles.container}>
-            <View style={styles.searchContainer}>
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Enter name gadget"
-                    value={gadgetSearchName}
-                    onChangeText={(e) => { setGadgetSearchName(e) }} />
-                <TouchableOpacity style={styles.searchButton} onPress={() => { TouchSearchListInfo() }}>
-                    <Text style={styles.searchButtonText}>🔍</Text>
-                </TouchableOpacity>
-            </View>
+        <View style={styles.CardInfo}>
             <FlatList
-                data={gadgets}
+                data={productInfo}
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item }) => (
-                    <TouchableOpacity style={styles.itemContainer} onPress={() => { TouchProdInfo(item.productId) }}>
+                    <View>
                         <Image source={{ uri: item.image }} style={styles.image} />
-                        <Text style={styles.name}>{item.name}</Text>
-                        <Text style={styles.price}>{item.price} UAH</Text>
+                        <Text style={styles.name}>Name: {item.name}</Text>
+                        <Text style={styles.price}>Price: {item.price} UAH</Text>
+                        <Text style={styles.detailProd}>Detail:</Text>
+                        <Text style={styles.detail}>Color: {item.color}</Text>
+                        <Text style={styles.detail}>Pixel: {item.pixel}</Text>
+                        <Text style={styles.detail}>Description: {item.description}</Text>
                         <TouchableOpacity style={styles.buttonBuy} onPress={() => { AddOrder(item) }}>
                             <Text style={styles.buttonTextBuy}>Buy</Text>
                         </TouchableOpacity>
-                        <View style={styles.textContainer}>
-                            {item.quantity > 0 ? (
-                                <Text style={styles.obviousness}>Are available</Text>
-                            ) : (
-                                <Text style={styles.nobviousness}>Not available</Text>
-                            )}
-                            <Text style={styles.prodCode}>Product code: {item.productId}</Text>
-                        </View>
-                    </TouchableOpacity>
+                    </View>
                 )}
             />
         </View>
@@ -117,21 +95,13 @@ export default function MainMenu({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 16,
-        backgroundColor: '#f0f0f0',
-    },
-    itemContainer: {
+    CardInfo: {
         marginBottom: 16,
         padding: 16,
         backgroundColor: '#fff',
         borderRadius: 8,
         elevation: 4,
-    },
-    textContainer: {
-        flexDirection: 'row',
-        marginLeft: 8
+        borderRadius: 20
     },
     image: {
         width: 300,
@@ -139,6 +109,7 @@ const styles = StyleSheet.create({
         resizeMode: 'contain',
         borderRadius: 8,
         marginBottom: 8,
+        marginBottom: 20
     },
     buttonBuy: {
         backgroundColor: '#27ae60',
@@ -165,52 +136,26 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     name: {
-        fontSize: 28,
+        fontSize: 27,
         fontWeight: 'bold',
         marginBottom: 10,
-        marginLeft: 30
+        marginLeft: 30,
     },
     price: {
-        fontSize: 24,
+        fontSize: 26,
         fontWeight: 'bold',
         marginLeft: 30
     },
-    prodCode: {
-        fontSize: 16,
-        marginLeft: 90
+    detailProd: {
+        fontSize: 30,
+        fontWeight: 'bold',
+        marginLeft: 30,
+        marginTop: 25
     },
-    obviousness: {
-        fontSize: 16,
-        color: 'green',
-        marginLeft: 20
-    },
-    nobviousness: {
-        fontSize: 16,
-        color: 'red',
-        marginLeft: 20
-    },
-    searchContainer: {
-        flexDirection: 'row',
-        marginBottom: 16,
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        elevation: 4,
-        paddingHorizontal: 16,
-        alignItems: 'center',
-    },
-    searchInput: {
-        flex: 1,
-        paddingVertical: 12,
-        fontSize: 16,
-    },
-    searchButton: {
-        backgroundColor: 'transparent',
-        padding: 12,
-        borderRadius: 8,
-        marginLeft: 10,
-    },
-    searchButtonText: {
-        color: '#3498db',
+    detail: {
         fontSize: 20,
+        fontWeight: 'bold',
+        marginLeft: 30,
+        marginTop: 10
     },
-});
+})

@@ -24,16 +24,19 @@ const Registration = ({ navigation }) => {
             console.error("Error during registration:", error);
             alert("An error occurred. Please check the console for details.");
         })
-    }
+    };
 
     const LoginPage = () => {
         navigation.navigate("Login");
-    }
+    };
 
     return (
         <View style={styles.container}>
+            <Text style={styles.textReg}>Name</Text>
             <TextInput style={styles.input} placeholder='Enter your name' value={name} onChangeText={(e) => (setName(e))} />
+            <Text style={styles.textReg}>Password</Text>
             <TextInput style={styles.input} placeholder='Enter your password' value={password} onChangeText={(e) => (setPassword(e))} />
+            <Text style={styles.textReg}>Email</Text>
             <TextInput style={styles.input} placeholder='Enter your email' value={email} onChangeText={(e) => (setEmail(e))} />
             <TouchableOpacity style={styles.button} onPress={RegistrationAccount}><Text style={styles.buttonText}>Enter</Text></TouchableOpacity>
             <TouchableOpacity style={styles.buttonLog} onPress={LoginPage}><Text style={styles.buttonTextLog}>If you have a account</Text></TouchableOpacity>
@@ -46,7 +49,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
         backgroundColor: '#ffffff',
         padding: 16,
     },
@@ -58,6 +60,13 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         fontSize: 18,
         color: '#2c3e50',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 3,
+        },
+        shadowOpacity: 0.27,
+        shadowRadius: 4.65,
     },
     button: {
         backgroundColor: '#27ae60',
@@ -103,6 +112,10 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
     },
+    textReg: {
+        fontSize: 20,
+        fontWeight: 'bold'
+    }
 });
 
 export default Registration;

@@ -1,12 +1,12 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
-import { Image, Text, View, FlatList, TouchableOpacity, StyleSheet, TextInput } from "react-native";
+import { useState } from "react";
+import { Image, Text, View, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function MainMenu({ navigation }) {
+export default function CategorySearch({ navigation, route }) {
 
-    const [gadgets, setGadgets] = useState([]);
-    const [gadgetSearchName, setGadgetSearchName] = useState('');
+    const { categorySearch, categoryId } = route.params;
+    const [productInfo, setProductInfo] = useState([]);
 
     const getToken = async () => {
         try {
@@ -18,24 +18,24 @@ export default function MainMenu({ navigation }) {
         }
     };
 
-    const SelectGadgets = () => {
+    const SelectProductInfo = () => {
         getToken().then((token) => {
             if (token) {
                 axios({
                     method: 'get',
-                    url: 'http://bibizan12-001-site1.ctempurl.com/api/Product/Select',
+                    url: `http://bibizan12-001-site1.ctempurl.com/api/Product/FindByCategoryAndProductName?categoryId=${categoryId}&name=${categorySearch}`,
                     headers: {
                         'Authorization': 'Bearer ' + token,
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     },
                 }).then((response) => {
-                    setGadgets(response.data);
+                    setProductInfo(response.data);
                 }).catch((error) => {
-                    console.error("Error fetching gadgets:", error);
-                });
+                    alert("You have a problem!")
+                })
             }
-        });
+        })
     };
 
     const AddOrder = (item) => {
@@ -70,28 +70,14 @@ export default function MainMenu({ navigation }) {
         navigation.navigate("Product Information", { productId });
     };
 
-    const TouchSearchListInfo = () => {
-        navigation.navigate("Search Product", { gadgetSearchName });
-    };
-
-    useEffect(() => {
-        SelectGadgets();
-    }, [])
+    useState(() => {
+        SelectProductInfo();
+    }, [categorySearch], [categoryId]);
 
     return (
         <View style={styles.container}>
-            <View style={styles.searchContainer}>
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Enter name gadget"
-                    value={gadgetSearchName}
-                    onChangeText={(e) => { setGadgetSearchName(e) }} />
-                <TouchableOpacity style={styles.searchButton} onPress={() => { TouchSearchListInfo() }}>
-                    <Text style={styles.searchButtonText}>🔍</Text>
-                </TouchableOpacity>
-            </View>
             <FlatList
-                data={gadgets}
+                data={productInfo}
                 keyExtractor={(item, index) => index.toString()}
                 renderItem={({ item }) => (
                     <TouchableOpacity style={styles.itemContainer} onPress={() => { TouchProdInfo(item.productId) }}>
@@ -213,4 +199,4 @@ const styles = StyleSheet.create({
         color: '#3498db',
         fontSize: 20,
     },
-});
+})

@@ -21,7 +21,7 @@ const Login = ({ navigation }) => {
                 alert('You successfully authenticated');
                 AsyncStorage.setItem('token', response.data.token)
                     .then(() => {
-                        navigation.navigate('Main Menu');
+                        navigation.navigate('Main Tabs');
                     })
                     .catch((error) => {
                         console.error("Error storing token:", error);
@@ -36,7 +36,9 @@ const Login = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
+            <Text style={styles.textLog}>Name</Text>
             <TextInput style={styles.input} placeholder='Enter your name' value={name} onChangeText={(e) => (setName(e))} />
+            <Text style={styles.textLog}>Password</Text>
             <TextInput style={styles.input} placeholder='Enter your password' value={password} onChangeText={(e) => (setPassword(e))} />
             <TouchableOpacity style={styles.button} onPress={() => (LoginAccount())} ><Text style={styles.buttonText}>Enter</Text></TouchableOpacity>
         </View>
@@ -48,7 +50,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
         backgroundColor: '#ffffff',
         padding: 16,
     },
@@ -60,6 +61,13 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         fontSize: 18,
         color: '#2c3e50',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 3,
+        },
+        shadowOpacity: 0.27,
+        shadowRadius: 4.65
     },
     button: {
         backgroundColor: '#27ae60',
@@ -83,6 +91,10 @@ const styles = StyleSheet.create({
         color: '#ffffff',
         fontSize: 18,
         fontWeight: 'bold',
+    },
+    textLog: {
+        fontSize: 20,
+        fontWeight: 'bold'
     }
 });
 
