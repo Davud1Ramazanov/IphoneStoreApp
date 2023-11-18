@@ -2,10 +2,13 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { Image, Text, View, FlatList, TouchableOpacity, StyleSheet, TextInput } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Button, Card, Snackbar } from 'react-native-paper';
 
 export default function OrderPage({ navigation }) {
 
     const [orders, setOrders] = useState([]);
+    const [snackBarVisible, setSnackBarVisible] = useState(false);
+    const [snackBarText, setSnackBarText] = useState('');
 
     const getToken = async () => {
         try {
@@ -31,10 +34,10 @@ export default function OrderPage({ navigation }) {
                 }).then((response) => {
                     setOrders(response.data);
                 }).catch((error) => {
-                    alert("Error you don't have order")
-                });
+                    setOrders([]);
+                })
             }
-        });
+        }, []);
     };
 
     const RemoveOrder = (item) => {
@@ -57,13 +60,68 @@ export default function OrderPage({ navigation }) {
                         'Content-Type': 'application/json'
                     },
                 }).then((response) => {
-                    alert(`You succsessfull removed ${item.productName}`);
+                    showSnackBar(`You succsessfull removed ${item.productName}`);
                 }).catch((error) => {
                     console.error("Error fetching gadgets:", error);
                 });
             }
         })
     };
+
+    const UpdateOrder = (item, updateQuantity) => {
+        getToken().then((token) => {
+            if (token) {
+                axios({
+                    method: 'post',
+                    url: 'http://bibizan12-001-site1.ctempurl.com/api/Order/Update',
+                    data: {
+                        "orderId": item.orderId,
+                        "productId": item.productId,
+                        "buyer": item.buyer,
+                        "quantity": updateQuantity,
+                        "total": item.total / item.quantity * updateQuantity,
+                        "dateOrder": new Date().toISOString()
+                    },
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                }).then((response) => {
+                    showSnackBar(`You successfully added/removed count for ${item.productName}`);
+                }).catch((error) => {
+                    console.error("Error fetching gadgets:", error);
+                });
+            }
+        });
+    };
+
+    const showSnackBar = (message) => {
+        setSnackBarText(message);
+        setSnackBarVisible(true);
+    }
+
+    const hideSnackBar = () => {
+        setSnackBarVisible(false);
+    }
+
+    const AddQuantity = (item) => {
+        if (item.quantity < item.productId) {
+            UpdateOrder(item, item.quantity + 1);
+        }
+        else {
+            showSnackBar("You have already selected the maximum quantity of goods.");
+        }
+    }
+
+
+    const RemoveQuantity = (item) => {
+        if (item.quantity <= 1) {
+            showSnackBar("You have already selected the maximum quantity of goods.");
+        } else {
+            UpdateOrder(item, item.quantity - 1);
+        }
+    }
 
     const TouchProdInfo = (productId) => {
         navigation.navigate("Product Information", { productId });
@@ -73,33 +131,57 @@ export default function OrderPage({ navigation }) {
         SelectOrders();
         const intervalId = setInterval(() => {
             SelectOrders();
-        }, 5000);
+        }, 1000);
         return () => clearInterval(intervalId);
     }, [])
 
     return (
         <View style={styles.container}>
-            <FlatList
-                data={orders}
-                keyExtractor={(item, index) => index.toString()}
-                renderItem={({ item }) => (
-                    <TouchableOpacity style={styles.orderContainer} onPress={() => { TouchProdInfo(item.productId) }}>
-                        <Image source={{ uri: item.image }} style={styles.image} />
-                        <Text style={styles.detail}>Order number: {item.orderId}</Text>
-                        <Text style={styles.detail}>Name: {item.productName}</Text>
-                        <Text style={styles.detail}>Quantity: {item.quantity}</Text>
-                        <Text style={styles.detail}>Total: {item.total} UAH</Text>
-                        <Text style={styles.detail}>Date: {item.dateOrder}</Text>
-                        <TouchableOpacity style={styles.buttonRemove} onPress={() => { RemoveOrder(item) }}>
-                            <Text style={styles.buttonTextRemove}>Delete</Text>
+            {orders.length > 0 ? (
+                <FlatList
+                    data={orders}
+                    keyExtractor={(item, index) => index.toString()}
+                    renderItem={({ item }) => (
+                        <TouchableOpacity style={styles.orderContainer} onPress={() => { TouchProdInfo(item.productId) }}>
+                            <Image source={{ uri: item.image }} style={styles.image} />
+                            <Text style={styles.detail}>Order number: {item.orderId}</Text>
+                            <Text style={styles.detail}>Name: {item.productName}</Text>
+                            <Text style={styles.detail}>Quantity: {item.quantity}</Text>
+                            <Text style={styles.detail}>Total: {item.total} UAH</Text>
+                            <Text style={styles.detail}>Date: {item.dateOrder}</Text>
+                            <Card.Actions style={{ marginRight: '20%' }}>
+                                <Button onPress={() => { AddQuantity(item) }}>
+                                    +
+                                </Button>
+                                <Button onPress={() => { RemoveQuantity(item) }}>
+                                    -
+                                </Button>
+                                <Button buttonColor="red" icon="delete" onPress={() => { RemoveOrder(item) }}>
+                                    Delete
+                                </Button>
+                            </Card.Actions>
                         </TouchableOpacity>
-                    </TouchableOpacity>
-                )}
-            />
+                    )}
+                />
+            ) : (
+                <Text style={styles.textDetail}>You have no orders at this time</Text>
+            )}
+
+            <Snackbar
+                visible={snackBarVisible}
+                onDismiss={hideSnackBar}
+                action={{
+                    label: 'OK',
+                    onPress: hideSnackBar,
+                }}
+                style={{ marginLeft: '10%' }}
+            >
+                {snackBarText}
+            </Snackbar>
+
         </View>
     )
 }
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -125,9 +207,9 @@ const styles = StyleSheet.create({
     detail: {
         fontSize: 20,
         fontWeight: 'bold',
-        margin: 10,
-        padding: 5,
-        marginLeft: 25
+        margin: 5,
+        marginLeft: 25,
+        marginBottom: 10
     },
     buttonRemove: {
         backgroundColor: 'red',
@@ -141,4 +223,23 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
     },
+    buttonQuantity: {
+        backgroundColor: 'blue',
+        width: 30,
+        height: 30,
+        borderRadius: 15,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginLeft: 26,
+        marginTop: 10
+    },
+    buttonTextQuantity: {
+        color: '#fff',
+        fontWeight: 'bold',
+    },
+    textDetail: {
+        fontSize: 20,
+        textAlign: 'center',
+        marginTop: '80%'
+    }
 });

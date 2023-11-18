@@ -2,11 +2,14 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { Image, Text, View, FlatList, TouchableOpacity, StyleSheet, TextInput } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Snackbar } from "react-native-paper";
 
 export default function MainMenu({ navigation }) {
 
     const [gadgets, setGadgets] = useState([]);
     const [gadgetSearchName, setGadgetSearchName] = useState('');
+    const [snackBarVisible, setSnackBarVisible] = useState(false);
+    const [snackBarText, setSnackBarText] = useState('');
 
     const getToken = async () => {
         try {
@@ -50,7 +53,7 @@ export default function MainMenu({ navigation }) {
                         "buyer": "buyer",
                         "quantity": 1,
                         "total": item.price,
-                        "dateOrder": new Date().toDateString
+                        "dateOrder": new Date().toISOString()
                     },
                     headers: {
                         'Authorization': 'Bearer ' + token,
@@ -58,13 +61,22 @@ export default function MainMenu({ navigation }) {
                         'Content-Type': 'application/json'
                     },
                 }).then((response) => {
-                    alert(`You succsessfull added ${item.name}`)
+                    showSnackBar(`You succsessfull added ${item.name}`)
                 }).catch((error) => {
                     console.error("Error fetching gadgets:", error);
                 });
             }
         })
     };
+
+    const showSnackBar = (message) => {
+        setSnackBarText(message);
+        setSnackBarVisible(true);
+    }
+
+    const hideSnackBar = () => {
+        setSnackBarVisible(false);
+    }
 
     const TouchProdInfo = (productId) => {
         navigation.navigate("Product Information", { productId });
@@ -76,6 +88,10 @@ export default function MainMenu({ navigation }) {
 
     useEffect(() => {
         SelectGadgets();
+        const intervalId = setInterval(() => {
+            SelectGadgets();
+        }, 1000);
+        return () => clearInterval(intervalId);
     }, [])
 
     return (
@@ -98,7 +114,13 @@ export default function MainMenu({ navigation }) {
                         <Image source={{ uri: item.image }} style={styles.image} />
                         <Text style={styles.name}>{item.name}</Text>
                         <Text style={styles.price}>{item.price} UAH</Text>
-                        <TouchableOpacity style={styles.buttonBuy} onPress={() => { AddOrder(item) }}>
+                        <TouchableOpacity style={styles.buttonBuy} onPress={() => {
+                            if (item.quantity > 0) {
+                                AddOrder(item);
+                            } else {
+                                showSnackBar(item.name + " not avilable")
+                            }
+                        }}>
                             <Text style={styles.buttonTextBuy}>Buy</Text>
                         </TouchableOpacity>
                         <View style={styles.textContainer}>
@@ -112,6 +134,17 @@ export default function MainMenu({ navigation }) {
                     </TouchableOpacity>
                 )}
             />
+            <Snackbar
+                visible={snackBarVisible}
+                onDismiss={hideSnackBar}
+                action={{
+                    label: 'OK',
+                    onPress: hideSnackBar
+                }}
+                style={{ marginLeft: '10%' }}
+            >
+                {snackBarText}
+            </Snackbar>
         </View>
     )
 }

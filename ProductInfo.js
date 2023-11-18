@@ -2,11 +2,14 @@ import axios from "axios";
 import { useState } from "react";
 import { Image, Text, View, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Snackbar } from 'react-native-paper';
 
 export default function ProductInfo({ route }) {
 
     const { productId } = route.params;
     const [productInfo, setProductInfo] = useState([]);
+    const [snackBarVisible, setSnackBarVisible] = useState(false);
+    const [snackBarText, setSnackBarText] = useState('');
 
     const getToken = async () => {
         try {
@@ -32,7 +35,7 @@ export default function ProductInfo({ route }) {
                 }).then((response) => {
                     setProductInfo(response.data);
                 }).catch((error) => {
-                    alert("You have a problem!")
+                    showSnackBar("You have a problem!")
                 })
             }
         })
@@ -50,7 +53,7 @@ export default function ProductInfo({ route }) {
                         "buyer": "buyer",
                         "quantity": 1,
                         "total": item.price,
-                        "dateOrder": new Date().toDateString
+                        "dateOrder": new Date().toISOString()
                     },
                     headers: {
                         'Authorization': 'Bearer ' + token,
@@ -58,7 +61,7 @@ export default function ProductInfo({ route }) {
                         'Content-Type': 'application/json'
                     },
                 }).then((response) => {
-                    alert(`You succsessfull added ${item.name}`)
+                    showSnackBar(`You succsessfull added ${item.name}`)
                 }).catch((error) => {
                     console.error("Error fetching gadgets:", error);
                 });
@@ -66,9 +69,22 @@ export default function ProductInfo({ route }) {
         })
     };
 
+    const showSnackBar = (message) => {
+        setSnackBarText(message);
+        setSnackBarVisible(true);
+    };
+
+    const hideSnackBar = () => {
+        setSnackBarVisible(false);
+    };
+
     useState(() => {
         SelectProductInfo();
-    }, [productId]);
+        const intervalId = setInterval(() => {
+            SelectProductInfo();
+        }, 1000);
+        return () => clearInterval(intervalId);
+    }, []);
 
     return (
         <View style={styles.CardInfo}>
@@ -83,13 +99,33 @@ export default function ProductInfo({ route }) {
                         <Text style={styles.detailProd}>Detail:</Text>
                         <Text style={styles.detail}>Color: {item.color}</Text>
                         <Text style={styles.detail}>Pixel: {item.pixel}</Text>
+                        <Text style={styles.detail}>Quantity: {item.quantity}</Text>
                         <Text style={styles.detail}>Description: {item.description}</Text>
-                        <TouchableOpacity style={styles.buttonBuy} onPress={() => { AddOrder(item) }}>
+                        <TouchableOpacity style={styles.buttonBuy} onPress={() => {
+                            if (item.quantity > 0) {
+                                AddOrder(item);
+                            } else {
+                                showSnackBar(item.name + " is not avilable")
+                            }
+                        }}>
                             <Text style={styles.buttonTextBuy}>Buy</Text>
                         </TouchableOpacity>
                     </View>
                 )}
             />
+
+            <Snackbar
+                visible={snackBarVisible}
+                onDismiss={hideSnackBar}
+                action={{
+                    label: 'OK',
+                    onPress: hideSnackBar
+                }}
+                style={{ marginLeft: '10%' }}
+            >
+                {snackBarText}
+            </Snackbar>
+
         </View>
     )
 }

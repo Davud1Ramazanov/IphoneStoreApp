@@ -2,11 +2,15 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-nativ
 import axios from 'axios';
 import { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Snackbar } from 'react-native-paper';
 
 const Login = ({ navigation }) => {
 
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [snackBarVisible, setSnackBarVisible] = useState(false);
+    const [snackBarText, setSnackBarText] = useState('');
 
     const LoginAccount = () => {
         axios({
@@ -18,7 +22,7 @@ const Login = ({ navigation }) => {
             }
         })
             .then((response) => {
-                alert('You successfully authenticated');
+                showSnackBar('You successfully authenticated');
                 AsyncStorage.setItem('token', response.data.token)
                     .then(() => {
                         navigation.navigate('Main Tabs');
@@ -28,19 +32,47 @@ const Login = ({ navigation }) => {
                     });
             })
             .catch((error) => {
-                console.error("Error during authentication:", error);
-                alert("An error occurred. Please check the console for details.");
+                showSnackBar("An error occurred. Please check correct data.");
             });
-    }
+    };
 
+    const showSnackBar = (message) => {
+        setSnackBarText(message);
+        setSnackBarVisible(true);
+    };
+
+    const hideSnackBar = () => {
+        setSnackBarVisible(false);
+    };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.textLog}>Name</Text>
-            <TextInput style={styles.input} placeholder='Enter your name' value={name} onChangeText={(e) => (setName(e))} />
-            <Text style={styles.textLog}>Password</Text>
-            <TextInput style={styles.input} placeholder='Enter your password' value={password} onChangeText={(e) => (setPassword(e))} />
-            <TouchableOpacity style={styles.button} onPress={() => (LoginAccount())} ><Text style={styles.buttonText}>Enter</Text></TouchableOpacity>
+            <View style={styles.loginElements}>
+                <Text style={styles.textLog}>Name</Text>
+                <TextInput style={styles.input} placeholder='Enter your name' value={name} onChangeText={(e) => (setName(e))} />
+                <Text style={styles.textLog}>Password</Text>
+                <TextInput style={styles.input} placeholder='Enter your password' secureTextEntry={true} value={password} onChangeText={(e) => (setPassword(e))} />
+                <Text style={styles.textLog}>Confirm Password</Text>
+                <TextInput style={styles.input} placeholder='Confirm your password' secureTextEntry={true} value={confirmPassword} onChangeText={(e) => (setConfirmPassword(e))} />
+                <TouchableOpacity style={styles.button} onPress={() => {{
+                    if(password === confirmPassword){
+                        LoginAccount();
+                    } else{
+                        showSnackBar("Password mismatch");
+                    }
+                }}} ><Text style={styles.buttonText}>Enter</Text></TouchableOpacity>
+            </View>
+            <Snackbar
+                visible={snackBarVisible}
+                onDismiss={hideSnackBar}
+                action={{
+                    label: 'OK',
+                    onPress: hideSnackBar
+                }}
+                style={{ marginLeft: '10%' }}
+            >
+                {snackBarText}
+            </Snackbar>
         </View>
     )
 
@@ -52,6 +84,20 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         backgroundColor: '#ffffff',
         padding: 16,
+    },
+    loginElements: {
+        backgroundColor: '#ffffff',
+        padding: 20,
+        borderRadius: 10,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 3,
+        },
+        shadowOpacity: 0.27,
+        shadowRadius: 4.65,
+        elevation: 6,
+        marginBottom: '48%'
     },
     input: {
         width: '100%',
@@ -85,7 +131,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.27,
         shadowRadius: 4.65,
         elevation: 6,
-        marginBottom: '30%'
+        marginBottom: '10%'
     },
     buttonText: {
         color: '#ffffff',

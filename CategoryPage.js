@@ -43,6 +43,10 @@ export default function CategoryPage({ navigation }) {
 
     useEffect(() => {
         SelectCategories();
+        const intervalId = setInterval(() => {
+            SelectCategories();
+        }, 1000);
+        return () => clearInterval(intervalId);
     }, [])
 
     return (

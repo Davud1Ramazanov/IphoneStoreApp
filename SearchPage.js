@@ -2,11 +2,14 @@ import axios from "axios";
 import { useState } from "react";
 import { Image, Text, View, TouchableOpacity, StyleSheet, FlatList } from "react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Snackbar } from 'react-native-paper';
 
 export default function SearchPage({ navigation, route }) {
 
     const { gadgetSearchName } = route.params;
     const [gadgetInfo, setGadgetInfo] = useState([]);
+    const [snackBarVisible, setSnackBarVisible] = useState(false);
+    const [snackBarText, setSnackBarText] = useState('');
 
     const getToken = async () => {
         try {
@@ -54,7 +57,7 @@ export default function SearchPage({ navigation, route }) {
                         "buyer": "buyer",
                         "quantity": 1,
                         "total": item.price,
-                        "dateOrder": new Date().toDateString
+                        "dateOrder": new Date().toISOString()
                     },
                     headers: {
                         'Authorization': 'Bearer ' + token,
@@ -62,7 +65,7 @@ export default function SearchPage({ navigation, route }) {
                         'Content-Type': 'application/json'
                     },
                 }).then((response) => {
-                    alert(`You succsessfull added ${item.name}`)
+                    showSnackBar(`You succsessfull added ${item.name}`)
                 }).catch((error) => {
                     console.error("Error fetching gadgets:", error);
                 });
@@ -70,8 +73,21 @@ export default function SearchPage({ navigation, route }) {
         })
     };
 
+    const showSnackBar = (message) => {
+        setSnackBarText(message);
+        setSnackBarVisible(true);
+    };
+
+    const hideSnackBar = () => {
+        setSnackBarVisible(false);
+    };
+
     useState(() => {
         SelectProductInfo();
+        const intervalId = setInterval(() => {
+            SelectProductInfo();
+        }, 1000);
+        return () => clearInterval(intervalId);
     }, []);
 
     return (
@@ -84,7 +100,13 @@ export default function SearchPage({ navigation, route }) {
                         <Image source={{ uri: item.image }} style={styles.image} />
                         <Text style={styles.name}>{item.name}</Text>
                         <Text style={styles.price}>{item.price} UAH</Text>
-                        <TouchableOpacity style={styles.buttonBuy} onPress={() => { AddOrder(item) }}>
+                        <TouchableOpacity style={styles.buttonBuy} onPress={() => {
+                            if (item.quantity > 0) {
+                                AddOrder(item);
+                            } else {
+                                showSnackBar(item.name + " is not avilable")
+                            }
+                        }}>
                             <Text style={styles.buttonTextBuy}>Buy</Text>
                         </TouchableOpacity>
                         <View style={styles.textContainer}>
@@ -98,6 +120,19 @@ export default function SearchPage({ navigation, route }) {
                     </TouchableOpacity>
                 )}
             />
+
+            <Snackbar
+                visible={snackBarVisible}
+                onDismiss={hideSnackBar}
+                action={{
+                    label: 'OK',
+                    onPress: hideSnackBar
+                }}
+                style={{ marginLeft: '10%' }}
+            >
+                {snackBarText}
+            </Snackbar>
+
         </View>
     )
 }
