@@ -35,7 +35,7 @@ export default function ProductInfo({ route }) {
                 }).then((response) => {
                     setProductInfo(response.data);
                 }).catch((error) => {
-                    showSnackBar("You have a problem!")
+                    showSnackBar("You have a problem!");
                 })
             }
         })

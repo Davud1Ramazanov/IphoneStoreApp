@@ -106,7 +106,7 @@ export default function OrderPage({ navigation }) {
     }
 
     const AddQuantity = (item) => {
-        if (item.quantity < item.productId) {
+        if (item.quantity < item.productQuantity) {
             UpdateOrder(item, item.quantity + 1);
         }
         else {

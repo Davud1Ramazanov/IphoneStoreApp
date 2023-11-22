@@ -35,7 +35,7 @@ export default function CategorySearch({ navigation, route }) {
                 }).then((response) => {
                     setProductInfo(response.data);
                 }).catch((error) => {
-                    alert("You have a problem!")
+                    showSnackBar("You have a problem!");
                 })
             }
         })
