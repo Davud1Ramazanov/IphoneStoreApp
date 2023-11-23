@@ -1,4 +1,5 @@
 import React from 'react';
+import { LogBox } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -16,10 +17,12 @@ import OrderPage from './OrderPage';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
+LogBox.ignoreAllLogs(true);
+
 const MainTabNavigator = () => (
     <Tab.Navigator
         initialRouteName="Main Menu"
-        tabBarOptions={{
+        screenOptions={{
             activeTintColor: '#3498db',
             inactiveTintColor: 'gray',
         }}
